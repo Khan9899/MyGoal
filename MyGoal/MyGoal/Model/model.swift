@@ -1,43 +1,66 @@
-
-
-
 import Foundation
 
-// class to register each user with unique identifier and save it into an array
-class userProfile: Identifiable {
-    let id: UUID = UUID()
-    let name: String = ""
-    let emailAddress: String = ""
-    let passWord: String = ""
+class UserManager: ObservableObject {
+    static let shared = UserManager()
+    @Published var users: [User] = []
 
-     init(name: String, emailAddress: String, password: String) {
-        self.id = UUID()
-        self.name = name
-        self.emailAddress = emailAddress
-        self.password = password
-    }
+    private init() {}
 
-     func createGoal(goal: String) {
-        goals.append(goal)
+    struct User {
+        var id: UUID // Add the id property
+        var name: String
+        var email: String
+        var password: String
+        var tasks: [String] // Add tasks property
+
+        // Function to check if the provided password matches the user's password
+        func isValidPassword(_ inputPassword: String) -> Bool {
+            return password == inputPassword
+        }
     }
 
     
-}
 
-// function to validate the email and password to log in
-// the email and password taken from the userProfile class
-// Function to validate the email and password to log in
-func validateLogin(email: String, password: String, userProfiles: [UserProfile]) -> Bool {
-    for userProfile in userProfiles {
-        if userProfile.emailAddress == email && userProfile.password == password {
-            return true  // Login successful
+    func registerUser(name: String, email: String, password: String, confirmedPassword: String) -> Bool {
+        guard password == confirmedPassword else {
+            // Passwords do not match
+            return false
+        }
+
+        // Check if the email is already registered
+        if users.contains(where: { $0.email == email }) {
+            // Email already exists
+            return false
+        }
+
+        let newUser = User(id: UUID(), name: name, email: email, password: password, tasks: [])
+        users.append(newUser)
+
+        // Registration successful
+        return true
+    }
+
+    func loginUser(email: String, password: String) -> Bool {
+        // Check if a user with the provided email exists
+        if let user = users.first(where: { $0.email == email }) {
+            // Check if the provided password matches the user's password
+            return user.isValidPassword(password)
+        }
+
+        // User not found
+        return false
+    }
+
+    func addTask(for userID: UUID, task: String) {
+        if let index = users.firstIndex(where: { $0.id == userID }) {
+            users[index].tasks.append(task)
         }
     }
-    return false  // Login failed
+
+    func removeTask(for userID: UUID, at index: Int) {
+        if let userIndex = users.firstIndex(where: { $0.id == userID }) {
+            users[userIndex].tasks.remove(at: index)
+        }
+    }
 }
-
-
-
-
-
 
